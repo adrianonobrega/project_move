@@ -37,7 +37,12 @@ export class UsersService {
     const { password: _, ...result } = user;
     return result;
   }
-
+  async findByEmailForAuth(email: string) {
+      return this.prisma.user.findUnique({
+        where: { email }
+      });
+    }
+  
   async findAll() {
     const users = await this.prisma.user.findMany({
       include: { address: true }
