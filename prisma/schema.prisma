@@ -10,6 +10,10 @@ datasource db {
 model Movie {
   id          String   @id @default(uuid())
   title       String
+  description String?
+  coverUrl    String?
+  rating      Float?
+  duration    Int?
   folderPath  String
   hlsManifest String
   createdAt   DateTime @default(now())
