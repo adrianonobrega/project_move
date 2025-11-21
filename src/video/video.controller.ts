@@ -8,6 +8,7 @@ import { CreateVideoDto } from './dto/create-video.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { Query, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
 
 @UseGuards(AuthGuard('jwt')) 
 @Controller('videos')
@@ -41,8 +42,12 @@ export class VideoController {
   }
 
   @Get()
-  findAll() {
-    return this.videoService.findAll();
+  findAll(
+    @Query('search') search?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ) {
+    return this.videoService.findAll(search, page, limit);
   }
 
   @Get(':id')

@@ -83,10 +83,33 @@ export class VideoService {
     });
   }
 
-  async findAll() {
-    return this.prisma.movie.findMany({
+  async findAll(search?: string, page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+
+    const where = search ? {
+      OR: [
+        { title: { contains: search } },
+        { description: { contains: search } }
+      ]
+    } : undefined;
+
+    const movies = await this.prisma.movie.findMany({
+      where,
+      take: limit, 
+      skip: skip, 
       orderBy: { createdAt: 'desc' }
     });
+
+    const total = await this.prisma.movie.count({ where });
+
+    return {
+      data: movies,
+      meta: {
+        total,
+        page,
+        lastPage: Math.ceil(total / limit)
+      }
+    };
   }
 
   async findOne(id: string) {

@@ -1,4 +1,10 @@
+import { IsString, IsOptional } from 'class-validator';
+
 export class CreateVideoDto {
+  @IsString()
   title: string;
-  description: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 }
