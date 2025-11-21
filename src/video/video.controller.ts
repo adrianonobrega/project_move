@@ -10,7 +10,10 @@ import { UpdateVideoDto } from './dto/update-video.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiTags('Videos') 
+@ApiBearerAuth()
 @UseGuards(AuthGuard('jwt')) 
 @Controller('videos')
 export class VideoController {
