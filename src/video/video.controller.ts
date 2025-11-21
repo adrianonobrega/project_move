@@ -1,14 +1,15 @@
 import { 
-  Controller, Post, Get, Delete, Param, UploadedFiles, UseInterceptors, Body, BadRequestException, 
-  UseGuards 
+  Controller, Post, Get, Patch, Delete, Param, Query, Body, 
+  UploadedFiles, UseInterceptors, BadRequestException, UseGuards, 
+  DefaultValuePipe, ParseIntPipe 
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { VideoService } from './video.service';
 import { CreateVideoDto } from './dto/create-video.dto';
+import { UpdateVideoDto } from './dto/update-video.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { Query, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
 
 @UseGuards(AuthGuard('jwt')) 
 @Controller('videos')
@@ -29,16 +30,11 @@ export class VideoController {
     const videoFile = files.file ? files.file[0] : null;
     const coverFile = files.cover ? files.cover[0] : null;
 
-    if (!videoFile) throw new BadRequestException('O arquivo de vídeo é obrigatório.');
+    if (!videoFile) {
+      throw new BadRequestException('O arquivo de vídeo é obrigatório.');
+    }
 
     return this.videoService.uploadAndConvert(videoFile, coverFile, createVideoDto);
-  }
-
-  @UseGuards(RolesGuard)
-  @Roles('ADMIN')
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.videoService.remove(id);
   }
 
   @Get()
@@ -53,5 +49,27 @@ export class VideoController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.videoService.findOne(id);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
+  @Patch(':id')
+  @UseInterceptors(FileFieldsInterceptor([
+    { name: 'cover', maxCount: 1 },
+  ]))
+  update(
+    @Param('id') id: string, 
+    @Body() updateVideoDto: UpdateVideoDto,
+    @UploadedFiles() files: { cover?: Express.Multer.File[] }
+  ) {
+    const coverFile = files && files.cover ? files.cover[0] : undefined;
+    return this.videoService.update(id, updateVideoDto, coverFile);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.videoService.remove(id);
   }
 }

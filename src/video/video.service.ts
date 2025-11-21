@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateVideoDto } from './dto/create-video.dto';
+import { UpdateVideoDto } from './dto/update-video.dto';
 
 @Injectable()
 export class VideoService {
@@ -118,6 +119,43 @@ export class VideoService {
     return movie;
   }
 
+  async update(id: string, updateVideoDto: UpdateVideoDto, coverFile?: Express.Multer.File) {
+    const movie = await this.findOne(id); // Verifica se existe
+    
+    let coverUrl = movie.coverUrl;
+
+    if (coverFile) {
+      const movieFolder = path.join(process.cwd(), movie.folderPath);
+      
+      const oldCoverName = movie.coverUrl ? movie.coverUrl.split('/').pop() : 'cover.jpg';
+      const oldCoverPath = path.join(movieFolder, oldCoverName || 'cover.jpg');
+      
+      if (fs.existsSync(oldCoverPath)) {
+        fs.unlinkSync(oldCoverPath);
+      }
+
+      const newCoverName = `cover_${Date.now()}.jpg`;
+      const newCoverPath = path.join(movieFolder, newCoverName);
+      
+      if (!fs.existsSync(movieFolder)) {
+         fs.mkdirSync(movieFolder, { recursive: true });
+      }
+
+      fs.writeFileSync(newCoverPath, coverFile.buffer);
+
+      coverUrl = `${movie.folderPath}/${newCoverName}`;
+    }
+
+    return this.prisma.movie.update({
+      where: { id },
+      data: {
+        title: updateVideoDto.title,
+        description: updateVideoDto.description,
+        coverUrl: coverUrl,
+      },
+    });
+  }
+
   async remove(id: string) {
     const movie = await this.findOne(id);
 
@@ -129,6 +167,6 @@ export class VideoService {
       fs.rmSync(absolutePath, { recursive: true, force: true });
     }
 
-    return { message: 'Filme e arquivos deletados com sucesso' };
+    return { message: 'Filme e arquivos físicos deletados com sucesso' };
   }
 }
